@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Landslide Susceptibility — Sindhupalchowk, Nepal</title>
+    <meta name="description" content="Interactive landslide susceptibility prediction map for Sindhupalchowk district, Nepal. Click anywhere to get real-time landslide risk assessment.">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header id="app-header">
+        <div class="header-left">
+            <div class="logo-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 22h20L12 2z"/>
+                    <path d="M12 9v5"/>
+                    <circle cx="12" cy="17" r="1"/>
+                </svg>
+            </div>
+            <div>
+                <h1>Landslide Susceptibility</h1>
+                <p class="subtitle">Sindhupalchowk District, Nepal</p>
+            </div>
+        </div>
+        <div class="header-right">
+            <button id="btn-stats" class="header-btn" onclick="togglePanel('stats-panel')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                Dashboard
+            </button>
+            <button id="btn-layers" class="header-btn" onclick="togglePanel('layers-panel')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                Layers
+            </button>
+        </div>
+    </header>
+
+    <!-- Map Container -->
+    <div id="map"></div>
+
+    <!-- Click Instruction Overlay -->
+    <div id="click-hint" class="click-hint">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 15l-2 5L9 9l11 4-5 2z"/></svg>
+        Click anywhere on the map to predict landslide susceptibility
+    </div>
+
+    <!-- Prediction Result Panel -->
+    <div id="prediction-panel" class="side-panel prediction-panel hidden">
+        <div class="panel-header">
+            <h2>Prediction Result</h2>
+            <button class="close-btn" onclick="closePanel('prediction-panel')">&times;</button>
+        </div>
+        <div class="panel-body">
+            <!-- Risk Gauge -->
+            <div id="risk-gauge" class="risk-gauge">
+                <div class="gauge-ring">
+                    <svg viewBox="0 0 120 120">
+                        <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="8"/>
+                        <circle id="gauge-arc" cx="60" cy="60" r="52" fill="none" stroke="#22c55e"
+                                stroke-width="8" stroke-linecap="round"
+                                stroke-dasharray="0 327" transform="rotate(-90 60 60)"/>
+                    </svg>
+                    <div class="gauge-value">
+                        <span id="risk-percent">—</span>
+                        <small>%</small>
+                    </div>
+                </div>
+                <div id="risk-label" class="risk-label">Click map to predict</div>
+            </div>
+
+            <!-- Coordinates -->
+            <div class="info-row">
+                <span class="info-label">Latitude</span>
+                <span id="info-lat" class="info-value">—</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Longitude</span>
+                <span id="info-lng" class="info-value">—</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Risk Zone</span>
+                <span id="info-zone" class="info-value zone-badge">—</span>
+            </div>
+
+            <!-- Feature Values -->
+            <h3 class="section-title">Feature Values</h3>
+            <div id="feature-list" class="feature-list">
+                <p class="muted">Click on map to see features</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats / Dashboard Panel -->
+    <div id="stats-panel" class="side-panel stats-panel hidden">
+        <div class="panel-header">
+            <h2>Model Dashboard</h2>
+            <button class="close-btn" onclick="closePanel('stats-panel')">&times;</button>
+        </div>
+        <div class="panel-body">
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value" id="stat-accuracy">—</div>
+                    <div class="metric-label">Accuracy</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="stat-f1">—</div>
+                    <div class="metric-label">F1 Score</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="stat-auc">—</div>
+                    <div class="metric-label">ROC AUC</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="stat-precision">—</div>
+                    <div class="metric-label">Precision</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="stat-recall">—</div>
+                    <div class="metric-label">Recall</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="stat-cv">—</div>
+                    <div class="metric-label">CV AUC</div>
+                </div>
+            </div>
+
+            <!-- Confusion Matrix -->
+            <h3 class="section-title">Confusion Matrix</h3>
+            <div class="confusion-matrix" id="confusion-matrix">
+                <table>
+                    <thead>
+                        <tr><th></th><th>Pred: No</th><th>Pred: Yes</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>Actual: No</strong></td><td id="cm-tn">—</td><td id="cm-fp">—</td></tr>
+                        <tr><td><strong>Actual: Yes</strong></td><td id="cm-fn">—</td><td id="cm-tp">—</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Feature Importance Chart -->
+            <h3 class="section-title">Feature Importance</h3>
+            <div class="chart-container">
+                <canvas id="importance-chart"></canvas>
+            </div>
+
+            <!-- Training Info -->
+            <h3 class="section-title">Training Info</h3>
+            <div class="info-row">
+                <span class="info-label">Algorithm</span>
+                <span class="info-value">Random Forest</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Trees</span>
+                <span class="info-value" id="stat-trees">—</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Training Samples</span>
+                <span class="info-value" id="stat-train">—</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Test Samples</span>
+                <span class="info-value" id="stat-test">—</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Layers Panel -->
+    <div id="layers-panel" class="side-panel layers-panel hidden">
+        <div class="panel-header">
+            <h2>Map Layers</h2>
+            <button class="close-btn" onclick="closePanel('layers-panel')">&times;</button>
+        </div>
+        <div class="panel-body">
+            <div class="layer-item">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="toggle-susceptibility" checked onchange="toggleLayer('susceptibility')">
+                    <span class="slider"></span>
+                </label>
+                <span>Susceptibility Overlay</span>
+            </div>
+            <div class="layer-item">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="toggle-landslides" checked onchange="toggleLayer('landslides')">
+                    <span class="slider"></span>
+                </label>
+                <span>Past Landslides</span>
+            </div>
+            <div class="layer-item">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="toggle-satellite" onchange="toggleLayer('satellite')">
+                    <span class="slider"></span>
+                </label>
+                <span>Satellite Imagery</span>
+            </div>
+
+            <!-- Legend -->
+            <h3 class="section-title" style="margin-top: 24px;">Susceptibility Legend</h3>
+            <div class="legend">
+                <div class="legend-item"><span class="legend-color" style="background: #228B22;"></span> Very Low (0–20%)</div>
+                <div class="legend-item"><span class="legend-color" style="background: #9ACD32;"></span> Low (20–40%)</div>
+                <div class="legend-item"><span class="legend-color" style="background: #FFD700;"></span> Moderate (40–60%)</div>
+                <div class="legend-item"><span class="legend-color" style="background: #FF8C00;"></span> High (60–80%)</div>
+                <div class="legend-item"><span class="legend-color" style="background: #DC143C;"></span> Very High (80–100%)</div>
+            </div>
+            <div class="legend" style="margin-top: 16px;">
+                <div class="legend-item"><span class="legend-color" style="background: rgba(255, 80, 80, 0.5); border: 2px solid #ff5050;"></span> Past Landslide</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <p>Loading susceptibility map...</p>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

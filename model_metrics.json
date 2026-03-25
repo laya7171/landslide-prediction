@@ -1,0 +1,29 @@
+{
+  "accuracy": 0.8092,
+  "precision": 0.7975,
+  "recall": 0.8289,
+  "f1_score": 0.8129,
+  "roc_auc": 0.8717,
+  "cv_auc_mean": 0.8373,
+  "cv_auc_std": 0.0285,
+  "confusion_matrix": {
+    "TN": 60,
+    "FP": 16,
+    "FN": 13,
+    "TP": 63
+  },
+  "feature_importance": {
+    "hillshade": 0.21287640597387653,
+    "dem": 0.13340025599591546,
+    "slope": 0.12973431747565034,
+    "slope_main": 0.12389079572331795,
+    "aspect": 0.11066327381746986,
+    "dist_river": 0.08940466671391822,
+    "drainage": 0.07724263155655928,
+    "soil_type": 0.061558352972615936,
+    "twi": 0.061229299770676475
+  },
+  "n_train": 608,
+  "n_test": 152,
+  "n_estimators": 300
+}

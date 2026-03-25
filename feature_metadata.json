@@ -1,0 +1,57 @@
+{
+  "features": [
+    "dem",
+    "aspect",
+    "slope",
+    "slope_main",
+    "drainage",
+    "hillshade",
+    "twi",
+    "dist_river",
+    "soil_type"
+  ],
+  "n_samples": 760,
+  "n_per_class": 380,
+  "reference_raster": "slope_modified.tif",
+  "target_crs": "EPSG:32645",
+  "raster_shape": [
+    2281,
+    2134
+  ],
+  "raster_bounds": [
+    346263.4597,
+    3054401.1449,
+    408197.8126,
+    3120601.8286
+  ],
+  "raster_transform": [
+    29.02265834114339,
+    0.0,
+    346263.4597,
+    0.0,
+    -29.022658351600146,
+    3120601.8286,
+    0.0,
+    0.0,
+    1.0
+  ],
+  "soil_categories": {
+    "11": 1,
+    "12": 2,
+    "14": 3,
+    "15": 4,
+    "16": 5,
+    "17": 6,
+    "9": 7,
+    "glacier": 8
+  },
+  "raster_files": {
+    "dem": "Dem_sind.tif",
+    "aspect": "aspect.tif",
+    "slope": "slope_modified.tif",
+    "slope_main": "Slope_main.tif",
+    "drainage": "drainage_direction.tif",
+    "hillshade": "hillshade2.tif",
+    "twi": "twi.tif"
+  }
+}
