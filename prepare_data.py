@@ -45,6 +45,7 @@ VECTOR_FILES = {
     "soil":          "soil Parent.gpkg",
     "river_line":    "river line.gpkg",
     "river_polygon": "river polygon.gpkg",
+    "landuse":       "sind_land_use.gpkg",
 }
 
 OUTPUT_CSV = os.path.join(BASE_DIR, "training_data.csv")
@@ -123,6 +124,32 @@ def rasterize_soil(soil_gdf, ref_ds):
         dtype=np.int16,
     ).astype(np.float32)
     return soil_raster, cat_map
+
+
+def rasterize_landuse(landuse_gdf, ref_ds):
+    """Rasterize landuse as integer-coded categories."""
+    landuse_proj = landuse_gdf.to_crs(ref_ds.crs)
+    cat_col = None
+    for col in landuse_proj.columns:
+        if landuse_proj[col].dtype == object and col != "geometry":
+            cat_col = col
+            break
+    if cat_col is None:
+        cat_col = landuse_proj.columns[0]
+
+    categories = sorted(landuse_proj[cat_col].dropna().astype(str).unique())
+    cat_map = {c: i + 1 for i, c in enumerate(categories)}
+    landuse_proj["_code"] = landuse_proj[cat_col].astype(str).map(cat_map).fillna(0).astype(int)
+
+    shapes = [(geom, code) for geom, code in zip(landuse_proj.geometry, landuse_proj["_code"]) if geom is not None]
+    lu_raster = rasterize(
+        shapes,
+        out_shape=(ref_ds.height, ref_ds.width),
+        transform=ref_ds.transform,
+        fill=0,
+        dtype=np.int16,
+    ).astype(np.float32)
+    return lu_raster, cat_map
 
 
 def sample_points_in_polygons(gdf, n, ref_ds):
@@ -240,6 +267,15 @@ def main():
     print(f"  Categories: {soil_cat_map}")
 
     # ------------------------------------------------------------------
+    # 4.5. Rasterize landuse
+    # ------------------------------------------------------------------
+    print("\n--- Rasterizing landuse ---")
+    landuse_gdf = gpd.read_file(os.path.join(BASE_DIR, VECTOR_FILES["landuse"]))
+    lu_raster, lu_cat_map = rasterize_landuse(landuse_gdf, ref_ds)
+    feature_arrays["landuse"] = lu_raster
+    print(f"  Categories: {lu_cat_map}")
+
+    # ------------------------------------------------------------------
     # 5. Sample balanced points
     # ------------------------------------------------------------------
     print("\n--- Sampling balanced training points ---")
@@ -311,6 +347,7 @@ def main():
         "raster_bounds": list(ref_ds.bounds),
         "raster_transform": list(ref_ds.transform),
         "soil_categories": soil_cat_map,
+        "landuse_categories": lu_cat_map,
         "raster_files": RASTER_FILES,
     }
     with open(OUTPUT_META, "w") as f:

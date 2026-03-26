@@ -32,7 +32,9 @@ META_PATH = os.path.join(BASE_DIR, "feature_metadata.json")
 SUSC_MAP_PATH = os.path.join(BASE_DIR, "susceptibility_map.tif")
 SUSC_ZONES_PATH = os.path.join(BASE_DIR, "susceptibility_zones.tif")
 LANDSLIDE_PATH = os.path.join(BASE_DIR, "landslide.gpkg")
+# Vite builds into `frontend/dist/`. We mount `dist` at runtime.
 FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
+FRONTEND_DIST_DIR = os.path.join(FRONTEND_DIR, "dist")
 
 # ---------------------------------------------------------------------------
 # Load resources at startup
@@ -119,6 +121,23 @@ shapes = [(geom, code) for geom, code in zip(soil_proj.geometry, soil_proj["_cod
 soil_raster = rasterize(shapes, out_shape=(ref_ds.height, ref_ds.width),
                         transform=ref_ds.transform, fill=0, dtype=np.int16).astype(np.float32)
 feature_data_arrays["soil_type"] = soil_raster
+
+print("Rasterizing landuse data...")
+lu_gdf = gpd.read_file(os.path.join(BASE_DIR, "sind_land_use.gpkg"))
+lu_proj = lu_gdf.to_crs(ref_ds.crs)
+cat_col = None
+for col in lu_proj.columns:
+    if lu_proj[col].dtype == object and col != "geometry":
+        cat_col = col
+        break
+if cat_col is None:
+    cat_col = lu_proj.columns[0]
+lu_map = feature_meta.get("landuse_categories", {})
+lu_proj["_code"] = lu_proj[cat_col].astype(str).map(lu_map).fillna(0).astype(int)
+shapes = [(geom, code) for geom, code in zip(lu_proj.geometry, lu_proj["_code"]) if geom is not None]
+lu_raster = rasterize(shapes, out_shape=(ref_ds.height, ref_ds.width),
+                      transform=ref_ds.transform, fill=0, dtype=np.int16).astype(np.float32)
+feature_data_arrays["landuse"] = lu_raster
 
 # Load landslide GeoJSON
 print("Loading landslide data...")
@@ -208,6 +227,19 @@ def predict(req: PredictRequest):
     X = []
     for fname in feature_names:
         val = float(feature_data_arrays[fname][row, col])
+        
+        # Fallback for boundary NaNs: search nearest valid neighbor in 5x5 window
+        if np.isnan(val):
+            half = 2
+            r_start = max(0, row - half)
+            r_end = min(feature_data_arrays[fname].shape[0], row + half + 1)
+            c_start = max(0, col - half)
+            c_end = min(feature_data_arrays[fname].shape[1], col + half + 1)
+            
+            window = feature_data_arrays[fname][r_start:r_end, c_start:c_end]
+            if np.any(~np.isnan(window)):
+                val = float(np.nanmean(window))
+                
         feature_values[fname] = val
         X.append(val)
 
@@ -235,6 +267,15 @@ def get_features(lat: float, lng: float):
     features = {}
     for fname in feature_names:
         val = float(feature_data_arrays[fname][row, col])
+        if np.isnan(val):
+            half = 2
+            r_start = max(0, row - half)
+            r_end = min(feature_data_arrays[fname].shape[0], row + half + 1)
+            c_start = max(0, col - half)
+            c_end = min(feature_data_arrays[fname].shape[1], col + half + 1)
+            window = feature_data_arrays[fname][r_start:r_end, c_start:c_end]
+            if np.any(~np.isnan(window)):
+                val = float(np.nanmean(window))
         features[fname] = round(val, 4) if not np.isnan(val) else None
     return {"lat": lat, "lng": lng, "features": features}
 
@@ -259,6 +300,25 @@ def get_stats():
 def get_landslides():
     """Return past landslide locations as GeoJSON."""
     return JSONResponse(content=landslide_geojson)
+
+
+@app.get("/api/sindhupalchowk-boundary")
+def get_sindhupalchowk():
+    """Return Sindhupalchowk district boundary as GeoJSON."""
+    fpath = os.path.join(BASE_DIR, "backend", "sindhupalchowk.geojson")
+    if not os.path.exists(fpath):
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(path=fpath, media_type="application/geo+json")
+
+
+@app.get("/api/nepal-boundary")
+def get_nepal():
+    """Return Nepal boundary as GeoJSON."""
+    fpath = os.path.join(BASE_DIR, "backend", "nepal.geojson")
+    if not os.path.exists(fpath):
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(path=fpath, media_type="application/geo+json")
+
 
 
 @app.get("/api/susceptibility-tile/{z}/{x}/{y}.png")
@@ -367,7 +427,10 @@ def get_susceptibility_image():
 
 
 # Mount frontend static files
-if os.path.exists(FRONTEND_DIR):
+if os.path.exists(FRONTEND_DIST_DIR):
+    app.mount("/app", StaticFiles(directory=FRONTEND_DIST_DIR, html=True), name="frontend")
+elif os.path.exists(FRONTEND_DIR):
+    # Fallback to legacy frontend (dev convenience)
     app.mount("/app", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
 
 

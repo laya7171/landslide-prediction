@@ -1,0 +1,13 @@
+Testing Lat: 27.891538339750078, Lng: 85.78948974609376
+Row: 1199, Col: 1191
+  dem: 1882.509765625 (NaN: False)
+  aspect: 158.58544921875 (NaN: False)
+  slope: 37.306766510009766 (NaN: False)
+  slope_main: 37.306766510009766 (NaN: False)
+  drainage: 5.0 (NaN: False)
+  hillshade: 144.43678283691406 (NaN: False)
+  twi: nan (NaN: True)
+  dist_river: 169.22970581054688 (NaN: False)
+  soil_type: 3.0 (NaN: False)
+
+CONCLUSION: 'No data' error is caused by NaN in one or more features at this pixel.
