@@ -1,32 +1,32 @@
 {
-  "accuracy": 0.8224,
-  "precision": 0.8101,
-  "recall": 0.8421,
-  "f1_score": 0.8258,
-  "roc_auc": 0.8826,
-  "cv_auc_mean": 0.8476,
-  "cv_auc_std": 0.0304,
+  "accuracy": 0.8289,
+  "precision": 0.8125,
+  "recall": 0.8553,
+  "f1_score": 0.8333,
+  "roc_auc": 0.8904,
+  "cv_auc_mean": 0.8503,
+  "cv_auc_std": 0.0297,
   "confusion_matrix": {
     "TN": 61,
     "FP": 15,
-    "FN": 12,
-    "TP": 64
+    "FN": 11,
+    "TP": 65
   },
   "feature_importance": {
-    "dem": 0.13265927218202428,
-    "aspect": 0.10787198299542967,
-    "slope": 0.13384514600418282,
-    "slope_main": 0.11956305876472889,
-    "drainage": 0.08383241433267866,
-    "hillshade": 0.19920563754512693,
-    "twi": 0.05673834328152197,
-    "dist_river": 0.07566292850011289,
-    "soil_type": 0.056795277424029754,
-    "landuse": 0.033825938970164185
+    "dem": 0.12753873755665057,
+    "aspect": 0.1077946068699372,
+    "slope": 0.13536297913880532,
+    "slope_main": 0.12386553863397044,
+    "drainage": 0.08673729032403943,
+    "hillshade": 0.2056913797383887,
+    "twi": 0.049332724740524185,
+    "dist_river": 0.07271509681615598,
+    "soil_type": 0.058790697682169345,
+    "landuse": 0.0321709484993588
   },
   "n_train": 608,
   "n_test": 152,
   "model_name": "Random Forest",
-  "n_estimators": 200,
-  "max_depth": 10
+  "n_estimators": 300,
+  "max_depth": 8
 }

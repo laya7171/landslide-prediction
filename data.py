@@ -59,8 +59,8 @@ def main():
     model = Pipeline([
         ("scaler", StandardScaler()),
         ("rf", RandomForestClassifier(
-            n_estimators=200,
-            max_depth=10,
+            n_estimators=300,
+            max_depth=8,
             min_samples_split=5,
             class_weight="balanced",
             random_state=42,
@@ -132,8 +132,8 @@ def main():
         "n_train": len(X_train),
         "n_test": len(X_test),
         "model_name": "Random Forest",
-        "n_estimators": 200,
-        "max_depth": 10,
+        "n_estimators": 300,
+        "max_depth": 8,
     }
     metrics_path = os.path.join(BASE_DIR, "model_metrics.json")
     with open(metrics_path, "w") as f:

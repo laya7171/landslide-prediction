@@ -1,0 +1,29 @@
+{
+  "Random Forest": {
+    "Accuracy": 0.8224,
+    "Precision": 0.8101,
+    "Recall": 0.8421,
+    "F1 Score": 0.8258,
+    "ROC AUC": 0.8826,
+    "CV AUC Mean": 0.8476,
+    "CV AUC Std": 0.0304
+  },
+  "XGBoost (GBT)": {
+    "Accuracy": 0.8355,
+    "Precision": 0.8148,
+    "Recall": 0.8684,
+    "F1 Score": 0.8408,
+    "ROC AUC": 0.8743,
+    "CV AUC Mean": 0.8543,
+    "CV AUC Std": 0.0228
+  },
+  "ANN (MLP)": {
+    "Accuracy": 0.7566,
+    "Precision": 0.7671,
+    "Recall": 0.7368,
+    "F1 Score": 0.7517,
+    "ROC AUC": 0.8251,
+    "CV AUC Mean": 0.7949,
+    "CV AUC Std": 0.0451
+  }
+}

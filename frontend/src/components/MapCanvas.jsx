@@ -137,7 +137,7 @@ export default function MapCanvas({
     ];
 
     const overlay = L.imageOverlay(susceptibilityData.image, bounds, {
-      opacity: 0.65,
+      opacity: 0.8,
       interactive: false,
     });
 
